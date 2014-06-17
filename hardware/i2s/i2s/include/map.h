@@ -1,0 +1,9 @@
+#ifndef __MAP_H
+#define __MAP_H
+
+#define S3C2440_PA_UART0 0x50000000
+#define S3C2440_PA_UART1 0x50004000
+#define S3C2440_PA_UART2 0x50008000
+
+#endif
+

@@ -1,0 +1,29 @@
+#ifndef __REGS_RTC_H
+#define __REGS_RTC_H
+
+#define	RTCCON	0x57000040
+#define	TICNT	0x57000044
+#define	RTCALM	0x57000050
+#define	ALMSEC	0x57000054
+#define	ALMMIN	0x57000058
+#define	ALMHOUR	0x5700005C
+#define	ALMDATE	0x57000060
+#define	ALMMON	0x57000064
+#define	ALMYEAR	0x57000068
+#define	BCDSEC	0x57000070
+#define	BCDMIN	0x57000074
+#define	BCDHOUR	0x57000078
+#define	BCDDATE	0x5700007C
+#define	BCDDAY	0x57000080
+#define	BCDMON	0x57000084
+#define	BCDYEAR	0x57000088
+
+#define RTCALM_ALMEN  (1<<6)
+#define RTCALM_YEAREN (1<<5)
+#define RTCALM_MONEN  (1<<4)
+#define RTCALM_DAYEN  (1<<3)
+#define RTCALM_HOUREN (1<<2)
+#define RTCALM_MINEN  (1<<1)
+#define RTCALM_SECEN  (1<<0)
+
+#endif
