@@ -1,0 +1,75 @@
+TOPDIR=$(PWD)
+
+BUSYBOX_SRC_PATH=$(TOPDIR)/tools/busybox-1.20.0
+
+MINI2440_ROOTFS_CROSS_COMPILER=arm-none-linux-gnueabi-
+MINI2440_ROOTFS_INSTALL_PATH=$(TOPDIR)/rootfs_mini2440
+
+GCC_LIB_DIR=`$(MINI2440_ROOTFS_CROSS_COMPILER)gcc -print-sysroot`
+
+.PHONY: rootfs_mini2440 rootfs_mini2440_clean rootfs_mini6410 rootfs_mini6410_clean rootfs
+
+rootfs_mini2440:
+	cp -f $(BUSYBOX_SRC_PATH)/rootfs_mini2440.config $(BUSYBOX_SRC_PATH)/.config
+	cd $(BUSYBOX_SRC_PATH) && export CROSS_COMPILE=$(MINI2440_ROOTFS_CROSS_COMPILER) \
+	&& export ARCH=arm && make && make install ROOTFS_INSTALL_CONFIG_PREFIX=$(MINI2440_ROOTFS_INSTALL_PATH)
+	make rootfs ROOTFS_INSTALL_PATH=$(MINI2440_ROOTFS_INSTALL_PATH)
+	cp $(GCC_LIB_DIR)/lib/*.so* $(MINI2440_ROOTFS_INSTALL_PATH)/lib/ -dfr
+
+rootfs_mini2440_clean:
+	make -C $(BUSYBOX_SRC_PATH) distclean
+	rm -rf $(MINI2440_ROOTFS_INSTALL_PATH)
+
+MINI6410_ROOTFS_CROSS_COMPILER=$(HOME)/toolchain/4.5.1/bin/arm-none-linux-gnueabi-
+MINI6410_ROOTFS_INSTALL_PATH=$(TOPDIR)/rootfs_mini6410
+
+rootfs_mini6410:
+	cp -f $(BUSYBOX_SRC_PATH)/rootfs_mini2440.config $(BUSYBOX_SRC_PATH)/.config
+	cd $(BUSYBOX_SRC_PATH) && export CROSS_COMPILE=$(MINI6410_ROOTFS_CROSS_COMPILER) \
+	&& export ARCH=arm && make && make install ROOTFS_INSTALL_CONFIG_PREFIX=$(MINI6410_ROOTFS_INSTALL_PATH)
+	make rootfs ROOTFS_INSTALL_PATH=$(MINI6410_ROOTFS_INSTALL_PATH)
+	cp $(GCC_LIB_DIR)/lib/*.so* $(MINI6410_ROOTFS_INSTALL_PATH)/lib/ -dfr
+
+rootfs_mini6410_clean:
+	make -C $(BUSYBOX_SRC_PATH) distclean
+	rm -rf $(MINI6410_ROOTFS_INSTALL_PATH)
+
+rootfs:
+	ln -s /bin/busybox $(ROOTFS_INSTALL_PATH)/init
+	mkdir -p $(ROOTFS_INSTALL_PATH)/dev
+	rm -f $(ROOTFS_INSTALL_PATH)/dev/console
+	rm -f $(ROOTFS_INSTALL_PATH)/dev/null
+	mknod $(ROOTFS_INSTALL_PATH)/dev/console c 5 1
+	mknod $(ROOTFS_INSTALL_PATH)/dev/null c 1 3
+	mkdir -p $(ROOTFS_INSTALL_PATH)/lib/firmware
+	mkdir -p $(ROOTFS_INSTALL_PATH)/nfs
+	mkdir -p $(ROOTFS_INSTALL_PATH)/mnt
+	mkdir -p $(ROOTFS_INSTALL_PATH)/proc
+	mkdir -p $(ROOTFS_INSTALL_PATH)/sys
+	mkdir -p $(ROOTFS_INSTALL_PATH)/tmp
+	mkdir -p $(ROOTFS_INSTALL_PATH)/var
+	mkdir -p $(ROOTFS_INSTALL_PATH)/etc/init.d
+	mkdir -p $(ROOTFS_INSTALL_PATH)/sdcard
+	touch $(ROOTFS_INSTALL_PATH)/etc/mtab
+	touch $(ROOTFS_INSTALL_PATH)/etc/profile
+	@echo "echo \"*****************************************************\"" \
+		 >$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "echo \"   Linux Rootfs    \"" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "echo \"*****************************************************\"" \
+		>>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "mount -t proc proc /proc" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "mount -t tmpfs tmpfs /tmp -o size=1m" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "mount -t tmpfs tmpfs /dev -o size=64k" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "mount -t sysfs sysfs /sys" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "ifconfig lo up" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "ifconfig eth0 192.168.2.100 netmask 255.255.255.0" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "echo /sbin/mdev > /proc/sys/kernel/hotplug" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "mdev -s" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "mkdir /dev/pts" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "mount -t devpts devpts /dev/pts" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	@echo "telnetd -l /bin/ash" >>$(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+	chmod +x $(ROOTFS_INSTALL_PATH)/etc/init.d/rcS
+
+#	mkyaffs2image $(ROOTFS_INSTALL_PATH) root_fs.yaffs2.img
+
